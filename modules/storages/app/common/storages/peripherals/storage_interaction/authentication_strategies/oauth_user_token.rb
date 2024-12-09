@@ -50,6 +50,14 @@ module Storages
 
           # rubocop:disable Metrics/AbcSize
           def call(storage:, http_options: {}, &)
+            # TODO: should we add the switch between providers here? e.g. using IDP vs using NC to fetch access token?
+            # Idea:
+            # If users IDP supports token exchange && Storage wants to use token exchange:
+            #   -> Fetch tokens through token exchange
+            # else if storage has OAuth configured:
+            #   -> Fetch tokens through OAuth towards storage configuration
+            # else:
+            #   -> Error
             token = current_token(storage).on_failure { |failure| return failure }
 
             opts = http_options.deep_merge({ headers: { "Authorization" => "Bearer #{token.result.access_token}" } })
