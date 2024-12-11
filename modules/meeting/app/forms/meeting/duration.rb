@@ -28,20 +28,7 @@
 
 class Meeting::Duration < ApplicationForm
   form do |meeting_form|
-    meeting_form.text_field(
-      name: :duration,
-      type: :number,
-      min: 0,
-      max: 24,
-      step: 0.05,
-      value: @value,
-      placeholder: Meeting.human_attribute_name(:duration),
-      label: Meeting.human_attribute_name(:duration),
-      visually_hide_label: false,
-      required: true,
-      leading_visual: { icon: :stopwatch },
-      caption: I18n.t("text_in_hours")
-    )
+
   end
 
   def initialize(meeting:)
