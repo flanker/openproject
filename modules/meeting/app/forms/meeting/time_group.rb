@@ -39,7 +39,11 @@ class Meeting::TimeGroup < ApplicationForm
         label: Meeting.human_attribute_name(:start_date),
         leading_visual: { icon: :calendar },
         required: true,
-        autofocus: false
+        autofocus: false,
+        data: {
+          "recurring-meetings--form-target": "startDate",
+          action: "input->recurring-meetings--form#updateFrequencyText"
+        }
       )
 
       group.text_field(
@@ -50,7 +54,11 @@ class Meeting::TimeGroup < ApplicationForm
         label: Meeting.human_attribute_name(:start_time),
         leading_visual: { icon: :clock },
         required: true,
-        caption: formatted_time_zone_offset
+        caption: formatted_time_zone_offset,
+        data: {
+          "recurring-meetings--form-target": "startTimeHour",
+          action: "input->recurring-meetings--form#updateFrequencyText"
+        }
       )
     end
   end
