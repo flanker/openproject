@@ -71,26 +71,4 @@
   end
 end %>
 
-<%# TEMPORARY # %>
-<%- if Rails.env.development? %>
-  <%= link_to "log time in project",
-  projects_time_entries_dialog_path(@project),
-  data: {
-    controller: "async-dialog",
-    test_selector: "toggle-log-time-dialog-button",
-  } %>
-  <%= link_to "edit log time",
-    projects_time_entries_dialog_path(@project, time_entry_id: TimeEntry.where(project: @project).first.id),
-  data: {
-    controller: "async-dialog",
-    test_selector: "toggle-log-time-dialog-button",
-  } %>
-  <%= link_to "log log time globally",
-    dialog_time_entries_path,
-  data: {
-    controller: "async-dialog",
-    test_selector: "toggle-log-time-dialog-button",
-  } %>
-<% end %>
-
 <openproject-base></openproject-base>
