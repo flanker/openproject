@@ -1,0 +1,38 @@
+<style>
+  .pattern-autocompleter {
+    -moz-appearance: textfield;
+    -webkit-appearance: textfield;
+    background-color: white;
+    background-color: -moz-field;
+    border: 1px solid lightgray;
+    font: -moz-field;
+    font: -webkit-small-control;
+    padding: 6px;
+  }
+  .pattern-autocompleter:focus {
+    border-color: blue;
+  }
+
+  .pattern-autocompleter input {
+    display: inline;
+    border: none;
+  }
+  .pattern-autocompleter input:focus {
+    outline: none;
+  }
+  .pattern-autocompleter span[contenteditable] {
+    border: none;
+  }
+  .pattern-autocompleter span[contenteditable]:focus {
+    outline: none;
+  }
+</style>
+
+<div class="pattern-autocompleter">
+  <%= render(Primer::Beta::Label.new(scheme: :accent, inline: true)) { "Author" } %>
+  <span contenteditable> Vacation - </span>
+  <%= render(Primer::Beta::Label.new(scheme: :accent, inline: true)) { "Start date" } %>
+  <span contenteditable> - </span>
+  <%= render(Primer::Beta::Label.new(scheme: :accent, inline: true)) { "End date" } %>
+  <span contenteditable> A</span>
+</div>
