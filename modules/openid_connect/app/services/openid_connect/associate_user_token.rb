@@ -45,7 +45,7 @@ module OpenIDConnect
       end
 
       token = user_session.oidc_user_tokens.build(access_token:, refresh_token:)
-      # We should discover further audiences from the token in the future
+      token.audiences = discover_audiences(access_token)
       token.audiences << UserToken::IDP_AUDIENCE if assume_idp
 
       token.save! if token.audiences.any?
@@ -56,6 +56,13 @@ module OpenIDConnect
     def find_user_session
       private_session_id = @session.id.private_id
       ::Sessions::UserSession.find_by(session_id: private_session_id)
+    end
+
+    def discover_audiences(access_token)
+      decoded, = ProviderTokenParser.new(verify_audience: false, required_claims: ["aud"]).parse(access_token)
+      Array(decoded["aud"])
+    rescue StandardError
+      []
     end
   end
 end

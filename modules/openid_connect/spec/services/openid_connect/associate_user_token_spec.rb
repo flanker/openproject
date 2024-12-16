@@ -40,10 +40,14 @@ RSpec.describe OpenIDConnect::AssociateUserToken do
   let(:access_token) { "access-token-foo" }
   let(:refresh_token) { "refresh-token-bar" }
 
+  let(:parser) { instance_double(OpenIDConnect::ProviderTokenParser, parse: [parsed_jwt, nil]) }
+  let(:parsed_jwt) { { "aud" => ["aud1", "aud2"] } }
+
   let!(:user_session) { create(:user_session, session_id: session.id.private_id) }
 
   before do
     allow(Rails.logger).to receive(:error)
+    allow(OpenIDConnect::ProviderTokenParser).to receive(:new).and_return(parser)
   end
 
   it "creates a correct user token", :aggregate_failures do
@@ -52,12 +56,58 @@ RSpec.describe OpenIDConnect::AssociateUserToken do
     token = OpenIDConnect::UserToken.last
     expect(token.access_token).to eq access_token
     expect(token.refresh_token).to eq refresh_token
-    expect(token.audiences).to eq ["__op-idp__"]
+    expect(token.audiences).to contain_exactly("__op-idp__", "aud1", "aud2")
   end
 
   it "logs no error" do
     subject
     expect(Rails.logger).not_to have_received(:error)
+  end
+
+  it "correctly tries parsing the access token" do
+    subject
+
+    expect(OpenIDConnect::ProviderTokenParser).to have_received(:new)
+      .with(verify_audience: false, required_claims: ["aud"])
+    expect(parser).to have_received(:parse).with(access_token)
+  end
+
+  context "when the JWT encodes aud as a string" do
+    let(:parsed_jwt) { { "aud" => "aud1" } }
+
+    it "creates a correct user token", :aggregate_failures do
+      expect { subject }.to change(OpenIDConnect::UserToken, :count).by(1)
+
+      token = OpenIDConnect::UserToken.last
+      expect(token.access_token).to eq access_token
+      expect(token.refresh_token).to eq refresh_token
+      expect(token.audiences).to contain_exactly("__op-idp__", "aud1")
+    end
+
+    it "logs no error" do
+      subject
+      expect(Rails.logger).not_to have_received(:error)
+    end
+  end
+
+  context "when the access token is not a valid JWT" do
+    before do
+      allow(parser).to receive(:parse).and_raise("Oops, not a JWT!")
+    end
+
+    it "creates a correct user token", :aggregate_failures do
+      expect { subject }.to change(OpenIDConnect::UserToken, :count).by(1)
+
+      token = OpenIDConnect::UserToken.last
+      expect(token.access_token).to eq access_token
+      expect(token.refresh_token).to eq refresh_token
+      expect(token.audiences).to contain_exactly("__op-idp__")
+    end
+
+    it "logs no error" do
+      subject
+      expect(Rails.logger).not_to have_received(:error)
+    end
   end
 
   context "when there is no refresh token" do
@@ -69,7 +119,7 @@ RSpec.describe OpenIDConnect::AssociateUserToken do
       token = OpenIDConnect::UserToken.last
       expect(token.access_token).to eq access_token
       expect(token.refresh_token).to be_nil
-      expect(token.audiences).to eq ["__op-idp__"]
+      expect(token.audiences).to contain_exactly("__op-idp__", "aud1", "aud2")
     end
 
     it "logs no error" do
@@ -107,13 +157,31 @@ RSpec.describe OpenIDConnect::AssociateUserToken do
   context "when we are not allowed to assume the token has the IDP audience" do
     let(:args) { { access_token:, refresh_token: } }
 
-    it "does not create a user token" do
-      expect { subject }.not_to change(OpenIDConnect::UserToken, :count)
+    it "creates a correct user token", :aggregate_failures do
+      expect { subject }.to change(OpenIDConnect::UserToken, :count).by(1)
+
+      token = OpenIDConnect::UserToken.last
+      expect(token.access_token).to eq access_token
+      expect(token.refresh_token).to eq refresh_token
+      expect(token.audiences).to contain_exactly("aud1", "aud2")
     end
 
     it "logs no error" do
       subject
       expect(Rails.logger).not_to have_received(:error)
+    end
+
+    context "and the token has no audience defined" do
+      let(:parsed_jwt) { { "sub" => "ject" } }
+
+      it "does not create a user token" do
+        expect { subject }.not_to change(OpenIDConnect::UserToken, :count)
+      end
+
+      it "logs no error" do
+        subject
+        expect(Rails.logger).not_to have_received(:error)
+      end
     end
   end
 end
