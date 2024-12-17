@@ -145,13 +145,19 @@ module Components
             input_id = "#project_available_life_cycle_steps_attributes_#{step.position - 1}_#{field}"
             parent = find(input_id).ancestor("primer-datepicker-field")
 
+            # Using retry_block with relying on errors raise by expectations do not work,
+            # hence using the finder methods instead. They do work with retry_block correctly.
             if present
-              expect(parent).to have_selector(selector, text:)
+              parent.find(selector, text:)
             else
-              expect(parent).to have_no_selector(selector)
+              begin
+                if parent.find(selector)
+                  raise "Expected to not have a visible selector '#{selector}'."
+                end
+              rescue Capybara::ElementNotFound
+                # Noop
+              end
             end
-          rescue StandardError
-            raise "Expected to#{present ? '' : ' not'} have a visible selector '#{selector}'."
           end
         end
       end
