@@ -37,7 +37,7 @@ class Project::LifeCycleStepDefinition < ApplicationRecord
   has_many :projects, through: :life_cycle_steps
   belongs_to :color, optional: false
 
-  validates :name, presence: true
+  validates :name, presence: true, uniqueness: true
   validates :type, inclusion: { in: %w[Project::StageDefinition Project::GateDefinition], message: :must_be_a_stage_or_gate }
 
   attr_readonly :type
